@@ -1,0 +1,54 @@
+from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
+
+class EnrollmentBase(BaseModel):
+    course_id: int
+
+class Enrollment(EnrollmentBase):
+    id: int
+    user_id: int
+    enrolled_at: datetime
+    completed: bool
+    progress_percentage: float
+    class Config:
+        from_attributes = True
+
+class LectureProgressBase(BaseModel):
+    lecture_id: int
+    completed: bool
+
+class LectureProgress(LectureProgressBase):
+    id: int
+    user_id: int
+    class Config:
+        from_attributes = True
+
+class CartItemBase(BaseModel):
+    course_id: int
+
+class CartItem(CartItemBase):
+    id: int
+    user_id: int
+    class Config:
+        from_attributes = True
+
+class WishlistItemBase(BaseModel):
+    course_id: int
+
+class WishlistItem(WishlistItemBase):
+    id: int
+    user_id: int
+    class Config:
+        from_attributes = True
+
+class CouponBase(BaseModel):
+    code: str
+    discount_percent: float
+    expiry_date: datetime
+
+class Coupon(CouponBase):
+    id: int
+    is_active: bool
+    class Config:
+        from_attributes = True

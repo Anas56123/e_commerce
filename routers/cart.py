@@ -1,0 +1,102 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from database import get_db
+from modules.course import Course as CourseModel
+from modules.interaction import CartItem as CartItemModel, WishlistItem as WishlistItemModel, Coupon as CouponModel, Enrollment as EnrollmentModel
+from modules.user import User as UserModel
+from schemas.interaction import CartItem, WishlistItem, Enrollment
+from oauth2 import get_current_user
+from typing import List, Optional
+
+router = APIRouter(
+    prefix="/api/v1/cart",
+    tags=["Shopping Cart"]
+)
+
+@router.get("/", response_model=List[CartItem])
+def get_cart(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    return db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).all()
+
+@router.post("/add/{course_id}")
+def add_to_cart(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    # Check if course exists
+    course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    # Check if already in cart
+    existing = db.query(CartItemModel).filter(
+        CartItemModel.user_id == current_user.id,
+        CartItemModel.course_id == course_id
+    ).first()
+    if existing:
+        return {"message": "Already in cart"}
+    
+    new_item = CartItemModel(user_id=current_user.id, course_id=course_id)
+    db.add(new_item)
+    db.commit()
+    return {"message": "Added to cart"}
+
+@router.delete("/remove/{course_id}")
+def remove_from_cart(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    item = db.query(CartItemModel).filter(
+        CartItemModel.user_id == current_user.id,
+        CartItemModel.course_id == course_id
+    ).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not in cart")
+    db.delete(item)
+    db.commit()
+    return {"message": "Removed from cart"}
+
+@router.post("/wishlist/{course_id}")
+def move_to_wishlist(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    # Remove from cart if exists
+    cart_item = db.query(CartItemModel).filter(
+        CartItemModel.user_id == current_user.id,
+        CartItemModel.course_id == course_id
+    ).first()
+    if cart_item:
+        db.delete(cart_item)
+    
+    # Add to wishlist
+    existing = db.query(WishlistItemModel).filter(
+        WishlistItemModel.user_id == current_user.id,
+        WishlistItemModel.course_id == course_id
+    ).first()
+    if not existing:
+        new_wish = WishlistItemModel(user_id=current_user.id, course_id=course_id)
+        db.add(new_wish)
+    
+    db.commit()
+    return {"message": "Moved to wishlist"}
+
+@router.get("/wishlist", response_model=List[WishlistItem])
+def get_wishlist(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    return db.query(WishlistItemModel).filter(WishlistItemModel.user_id == current_user.id).all()
+
+@router.post("/checkout")
+def checkout(coupon_code: Optional[str] = None, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    cart_items = db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).all()
+    if not cart_items:
+        raise HTTPException(status_code=400, detail="Cart is empty")
+    
+    # Calculate total and enroll
+    # For now, we'll just enroll the user in all courses in the cart
+    enrollments = []
+    for item in cart_items:
+        # Check if already enrolled
+        existing_enrollment = db.query(EnrollmentModel).filter(
+            EnrollmentModel.user_id == current_user.id,
+            EnrollmentModel.course_id == item.course_id
+        ).first()
+        
+        if not existing_enrollment:
+            new_enrollment = EnrollmentModel(user_id=current_user.id, course_id=item.course_id)
+            db.add(new_enrollment)
+            enrollments.append(new_enrollment)
+        
+        db.delete(item)
+    
+    db.commit()
+    return {"message": "Checkout successful", "enrolled_count": len(enrollments)}

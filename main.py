@@ -1,14 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from database import engine, Base
-from routers import user
-from routers.user import router as user_router
+from modules import user, course, interaction
+from routers import user as user_router_mod, course as course_router_mod, enrollment as enrollment_router_mod, cart as cart_router_mod
 
+# Create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="E-commerce API",
-    description="API for E-commerce",
+    title="E-commerce Course Platform API",
+    description="API for Course Catalog, Enrollment, Progress Tracking, and Shopping Cart",
     version="1.0.0"
 )
 
@@ -20,8 +22,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(user_router)
+app.include_router(user_router_mod.router)
+app.include_router(course_router_mod.router)
+app.include_router(enrollment_router_mod.router)
+app.include_router(cart_router_mod.router)
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 @app.get("/api/v1/")
 def root():
-    return {"message": "Welcome to the E-commerce API"}
+    return {"message": "Welcome to the E-commerce Course Platform API"}

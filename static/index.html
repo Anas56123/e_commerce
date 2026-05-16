@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Academy | Modern Course Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --secondary: #3b82f6;
+            --accent: #10b981;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Background */
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 40%);
+            z-index: -1;
+        }
+
+        header {
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: var(--glass);
+        }
+
+        main {
+            padding: 2rem 5%;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .search-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 0.8rem;
+            flex: 1;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-chip {
+            padding: 0.5rem 1.2rem;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-dim);
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .course-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .course-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .course-thumb {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .course-content {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .course-tag {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .course-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .course-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Shopping Cart Modal */
+        #cart-modal {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: var(--bg-dark);
+            border-left: 1px solid var(--border);
+            z-index: 200;
+            padding: 2rem;
+            transition: right 0.4s ease;
+            box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #cart-modal.open {
+            right: 0;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cart-item img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        /* Progress Tracker */
+        .progress-section {
+            margin: 4rem 0;
+        }
+
+        .progress-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .progress-bar-container {
+            flex: 1;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 1s ease-in-out;
+        }
+
+        .hidden { display: none; }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 150;
+            display: none;
+        }
+
+        .overlay.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="overlay" id="overlay"></div>
+
+    <header>
+        <div class="logo">
+            <i data-lucide="zap"></i>
+            Lumina Academy
+        </div>
+        <nav>
+            <a onclick="showSection('catalog')">Explore</a>
+            <a onclick="showSection('my-courses')">My Learning</a>
+            <a onclick="showSection('wishlist')">Wishlist</a>
+            <div class="auth-buttons" id="auth-controls">
+                <button class="btn btn-outline" onclick="toggleCart()">
+                    <i data-lucide="shopping-cart"></i>
+                    <span id="cart-count">0</span>
+                </button>
+                <button class="btn btn-primary">Sign In</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Catalog Section -->
+        <section id="catalog-section">
+            <div class="hero">
+                <h1>Unlock Your Full <span style="color: var(--primary)">Potential</span></h1>
+                <p>Join 2M+ students learning the world's most in-demand skills from industry experts.</p>
+                <div class="search-bar">
+                    <i data-lucide="search" style="margin-left: 1rem; color: var(--text-dim)"></i>
+                    <input type="text" id="course-search" placeholder="What do you want to learn today?" oninput="fetchCourses()">
+                    <button class="btn btn-primary" style="margin-right: 0.5rem">Search</button>
+                </div>
+            </div>
+
+            <div class="filters" id="category-filters">
+                <div class="filter-chip active" onclick="filterByCategory(null)">All Categories</div>
+                <!-- Categories will be injected here -->
+            </div>
+
+            <div class="course-grid" id="course-list">
+                <!-- Courses will be injected here -->
+            </div>
+        </section>
+
+        <!-- My Courses Section -->
+        <section id="my-courses-section" class="hidden">
+            <h2 style="font-size: 2rem; margin-bottom: 2rem;">My Learning</h2>
+            <div id="enrolled-list">
+                <!-- Enrolled courses will be injected here -->
+            </div>
+        </section>
+
+        <!-- Wishlist Section -->
+        <section id="wishlist-section" class="hidden">
+            <h2 style="font-size: 2rem; margin-bottom: 2rem;">My Wishlist</h2>
+            <div class="course-grid" id="wishlist-list"></div>
+        </section>
+    </main>
+
+    <!-- Shopping Cart Sidebar -->
+    <div id="cart-modal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2>Your Cart</h2>
+            <button class="btn btn-outline" onclick="toggleCart()"><i data-lucide="x"></i></button>
+        </div>
+        <div id="cart-items" style="flex: 1; overflow-y: auto;">
+            <!-- Cart items will be injected here -->
+        </div>
+        <div style="padding-top: 2rem; border-top: 1px solid var(--border);">
+            <div class="search-bar" style="margin-bottom: 1.5rem; padding: 0.2rem;">
+                <input type="text" id="coupon-code" placeholder="Coupon Code" style="padding: 0.5rem;">
+                <button class="btn btn-outline" onclick="applyCoupon()" style="font-size: 0.8rem;">Apply</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1.2rem;">
+                <span>Total:</span>
+                <span id="cart-total">$0.00</span>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;" onclick="checkout()">
+                Proceed to Checkout
+            </button>
+        </div>
+    </div>
+
+    <!-- Course Player Modal -->
+    <div id="player-modal" class="hidden" style="position: fixed; inset: 0; background: var(--bg-dark); z-index: 300; padding: 2rem; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 id="player-course-title">Course Player</h2>
+            <button class="btn btn-outline" onclick="closePlayer()"><i data-lucide="x"></i> Close</button>
+        </div>
+        <div style="display: flex; gap: 2rem; flex: 1; overflow: hidden;">
+            <div style="flex: 2; background: black; border-radius: 20px; display: flex; align-items: center; justify-content: center; position: relative;">
+                <video id="video-player" controls style="width: 100%; height: 100%; border-radius: 20px;"></video>
+                <div id="lecture-complete-overlay" class="hidden" style="position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; border-radius: 20px;">
+                    <i data-lucide="check-circle" style="width: 64px; height: 64px; color: var(--accent);"></i>
+                    <h3>Lecture Complete!</h3>
+                    <button class="btn btn-primary" onclick="markCompleteAndNext()">Mark as Complete & Next</button>
+                </div>
+            </div>
+            <div style="flex: 1; background: var(--bg-card); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; border: 1px solid var(--border);">
+                <h3 style="margin-bottom: 1.5rem;">Course Content</h3>
+                <div id="lecture-list" style="flex: 1; overflow-y: auto;">
+                    <!-- Lectures will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="hidden" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-dark); padding: 2.5rem; border-radius: 24px; border: 1px solid var(--border); z-index: 400; width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+        <h2 id="auth-title" style="margin-bottom: 1.5rem;">Sign In</h2>
+        <div id="auth-form" style="display: flex; flex-direction: column; gap: 1rem;">
+            <input type="text" id="auth-username" placeholder="Username" style="background: var(--glass); border: 1px solid var(--border); padding: 1rem; border-radius: 12px; color: white;">
+            <input type="password" id="auth-password" placeholder="Password" style="background: var(--glass); border: 1px solid var(--border); padding: 1rem; border-radius: 12px; color: white;">
+            <button class="btn btn-primary" onclick="handleAuth()" style="justify-content: center;">Continue</button>
+            <div style="text-align: center; margin-top: 1rem; color: var(--text-dim); cursor: pointer;" onclick="toggleAuthMode()" id="auth-toggle">
+                Don't have an account? Sign Up
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1rem 0;">
+            <button class="btn btn-outline" onclick="guestLogin()" style="justify-content: center; border-color: var(--primary); color: var(--primary);">
+                Try Guest Access (Demo)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1';
+        let currentCategory = null;
+        let authToken = localStorage.getItem('token');
+        let currentUser = null;
+        let isLogin = true;
+        let activeCourse = null;
+        let activeLecture = null;
+        let cart = [];
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        async function api(path, options = {}) {
+            if (authToken) {
+                options.headers = { ...options.headers, 'Authorization': `Bearer ${authToken}` };
+            }
+            const res = await fetch(`${API_BASE}${path}`, options);
+            if (res.status === 401 || res.status === 403) {
+                // Token expired or invalid
+                localStorage.removeItem('token');
+                authToken = null;
+                updateAuthUI();
+            }
+            return res.json();
+        }
+
+        async function updateAuthUI() {
+            const controls = document.getElementById('auth-controls');
+            if (authToken) {
+                try {
+                    currentUser = await api('/me');
+                    controls.innerHTML = `
+                        <button class="btn btn-outline" onclick="toggleCart()">
+                            <i data-lucide="shopping-cart"></i>
+                            <span id="cart-count">0</span>
+                        </button>
+                        <div style="display: flex; align-items: center; gap: 1rem; background: var(--glass); padding: 0.4rem 1rem; border-radius: 30px; border: 1px solid var(--border);">
+                            <span style="font-weight: 600;">${currentUser.username}</span>
+                            <button onclick="logout()" style="background: transparent; border: none; color: #ef4444; cursor: pointer;"><i data-lucide="log-out" style="width: 18px;"></i></button>
+                        </div>
+                    `;
+                    updateCart();
+                } catch (e) {
+                    authToken = null;
+                    updateAuthUI();
+                }
+            } else {
+                controls.innerHTML = `
+                    <button class="btn btn-primary" onclick="openAuth()">Sign In</button>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function openAuth() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('overlay').classList.add('active');
+        }
+
+        function closeAuth() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        function toggleAuthMode() {
+            isLogin = !isLogin;
+            document.getElementById('auth-title').textContent = isLogin ? 'Sign In' : 'Sign Up';
+            document.getElementById('auth-toggle').textContent = isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In";
+        }
+
+        async function handleAuth() {
+            const username = document.getElementById('auth-username').value;
+            const password = document.getElementById('auth-password').value;
+            
+            if (isLogin) {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const res = await fetch(`${API_BASE}/login`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.access_token) {
+                    localStorage.setItem('token', data.access_token);
+                    authToken = data.access_token;
+                    closeAuth();
+                    updateAuthUI();
+                } else {
+                    alert(data.detail || 'Login failed');
+                }
+            } else {
+                const res = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email: `${username}@demo.com`, password, role: 'student' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    isLogin = true;
+                    handleAuth();
+                } else {
+                    alert(data.detail || 'Registration failed');
+                }
+            }
+        }
+
+        async function guestLogin() {
+            // Random guest user
+            const rand = Math.floor(Math.random() * 10000);
+            const username = `guest_${rand}`;
+            const password = 'password123';
+            
+            // Register
+            await fetch(`${API_BASE}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email: `${username}@guest.com`, password, role: 'student' })
+            });
+            
+            // Login
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            const res = await fetch(`${API_BASE}/login`, { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            localStorage.setItem('token', data.access_token);
+            authToken = data.access_token;
+            closeAuth();
+            updateAuthUI();
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            authToken = null;
+            currentUser = null;
+            updateAuthUI();
+            showSection('catalog');
+        }
+
+        async function fetchCategories() {
+            const categories = await api('/courses/categories');
+            const container = document.getElementById('category-filters');
+            container.innerHTML = '<div class="filter-chip active" onclick="filterByCategory(null)">All Categories</div>';
+            categories.forEach(cat => {
+                const chip = document.createElement('div');
+                chip.className = 'filter-chip';
+                chip.textContent = cat.name;
+                chip.onclick = () => filterByCategory(cat.id, chip);
+                container.appendChild(chip);
+            });
+        }
+
+        function filterByCategory(id, el) {
+            currentCategory = id;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            if (el) el.classList.add('active');
+            else document.querySelector('.filter-chip').classList.add('active');
+            fetchCourses();
+        }
+
+        async function fetchCourses() {
+            const search = document.getElementById('course-search').value;
+            let url = `/courses/?search=${search}`;
+            if (currentCategory) url += `&category_id=${currentCategory}`;
+            
+            const courses = await api(url);
+            const container = document.getElementById('course-list');
+            container.innerHTML = '';
+
+            courses.forEach(course => {
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.innerHTML = `
+                    <img src="${course.thumbnail}" class="course-thumb" alt="${course.title}">
+                    <div class="course-content">
+                        <span class="course-tag">${course.category.name}</span>
+                        <h3 class="course-title">${course.title}</h3>
+                        <div class="course-footer">
+                            <span class="price">$${course.price}</span>
+                            <button class="btn btn-primary" onclick="addToCart(${course.id})">
+                                <i data-lucide="shopping-cart" style="width: 16px;"></i>
+                                Add
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        async function addToCart(courseId) {
+            if (!authToken) return openAuth();
+            await api(`/cart/add/${courseId}`, { method: 'POST' });
+            updateCart();
+            toggleCart(true);
+        }
+
+        async function updateCart() {
+            if (!authToken) return;
+            const items = await api('/cart/');
+            const container = document.getElementById('cart-items');
+            const count = document.getElementById('cart-count');
+            count.textContent = items.length;
+            
+            container.innerHTML = '';
+            let total = 0;
+            
+            for (const item of items) {
+                const course = await api(`/courses/${item.course_id}`);
+                total += course.price;
+                
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <img src="${course.thumbnail}">
+                    <div style="flex: 1">
+                        <div style="font-weight: 600; font-size: 0.9rem;">${course.title}</div>
+                        <div style="color: var(--accent); font-weight: 700;">$${course.price}</div>
+                        <div style="font-size: 0.7rem; color: var(--primary); cursor: pointer; margin-top: 0.2rem;" onclick="moveToWishlist(${course.id})">Move to Wishlist</div>
+                    </div>
+                    <button class="btn" style="padding: 0.2rem;" onclick="removeFromCart(${course.id})"><i data-lucide="trash-2" style="width: 16px; color: #ef4444;"></i></button>
+                `;
+                container.appendChild(div);
+            }
+            document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+            lucide.createIcons();
+        }
+
+        async function moveToWishlist(id) {
+            await api(`/cart/wishlist/${id}`, { method: 'POST' });
+            updateCart();
+            alert("Moved to wishlist!");
+        }
+
+        async function fetchWishlist() {
+            // We need an endpoint for this, let's add it to cart.py or use a generic one
+            // For now, I'll add the endpoint to cart.py in the next step
+            const items = await api('/cart/wishlist'); 
+            const container = document.getElementById('wishlist-list');
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim);">Your wishlist is empty.</p>';
+                return;
+            }
+
+            for (const item of items) {
+                const course = await api(`/courses/${item.course_id}`);
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.innerHTML = `
+                    <img src="${course.thumbnail}" class="course-thumb">
+                    <div class="course-content">
+                        <h3 class="course-title">${course.title}</h3>
+                        <div class="course-footer">
+                            <span class="price">$${course.price}</span>
+                            <button class="btn btn-primary" onclick="addToCart(${course.id})">Add to Cart</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        async function removeFromCart(id) {
+            await api(`/cart/remove/${id}`, { method: 'DELETE' });
+            updateCart();
+        }
+
+        async function checkout() {
+            const coupon = document.getElementById('coupon-code').value;
+            const data = await api(`/cart/checkout?coupon_code=${coupon}`, { method: 'POST' });
+            alert(data.message);
+            updateCart();
+            toggleCart(false);
+            showSection('my-courses');
+        }
+
+        function toggleCart(open) {
+            const modal = document.getElementById('cart-modal');
+            const overlay = document.getElementById('overlay');
+            if (open === undefined) open = !modal.classList.contains('open');
+            
+            if (open) {
+                modal.classList.add('open');
+                overlay.classList.add('active');
+            } else {
+                modal.classList.remove('open');
+                overlay.classList.remove('active');
+            }
+        }
+
+        function showSection(section) {
+            document.getElementById('catalog-section').classList.add('hidden');
+            document.getElementById('my-courses-section').classList.add('hidden');
+            document.getElementById('wishlist-section').classList.add('hidden');
+            
+            document.getElementById(`${section}-section`).classList.remove('hidden');
+            
+            if (section === 'my-courses') {
+                if (!authToken) return openAuth();
+                fetchMyCourses();
+            }
+            if (section === 'wishlist') {
+                if (!authToken) return openAuth();
+                fetchWishlist();
+            }
+        }
+
+        async function fetchMyCourses() {
+            const enrollments = await api('/enrollments/my-courses');
+            const container = document.getElementById('enrolled-list');
+            container.innerHTML = '';
+
+            for (const en of enrollments) {
+                const course = await api(`/courses/${en.course_id}`);
+                
+                const div = document.createElement('div');
+                div.className = 'progress-card';
+                div.innerHTML = `
+                    <img src="${course.thumbnail}" style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover;">
+                    <div style="flex: 1">
+                        <h3 style="margin-bottom: 0.5rem;">${course.title}</h3>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: ${en.progress_percentage}%"></div>
+                            </div>
+                            <span style="font-weight: 600;">${Math.round(en.progress_percentage)}%</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="openPlayer(${course.id})">Continue</button>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        async function openPlayer(courseId) {
+            activeCourse = await api(`/courses/${courseId}`);
+            document.getElementById('player-course-title').textContent = activeCourse.title;
+            
+            const list = document.getElementById('lecture-list');
+            list.innerHTML = '';
+            
+            activeCourse.lectures.forEach((lec, index) => {
+                const item = document.createElement('div');
+                item.style.padding = '1rem';
+                item.style.margin = '0.5rem 0';
+                item.style.borderRadius = '12px';
+                item.style.background = 'var(--glass)';
+                item.style.border = '1px solid var(--border)';
+                item.style.cursor = 'pointer';
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.innerHTML = `
+                    <span>${index + 1}. ${lec.title}</span>
+                    <i data-lucide="play-circle" style="width: 18px;"></i>
+                `;
+                item.onclick = () => playLecture(lec);
+                list.appendChild(item);
+            });
+            
+            document.getElementById('player-modal').classList.remove('hidden');
+            lucide.createIcons();
+            
+            if (activeCourse.lectures.length > 0) {
+                playLecture(activeCourse.lectures[0]);
+            }
+        }
+
+        function closePlayer() {
+            document.getElementById('player-modal').classList.add('hidden');
+            const video = document.getElementById('video-player');
+            video.pause();
+            fetchMyCourses(); // Update progress UI
+        }
+
+        function playLecture(lec) {
+            activeLecture = lec;
+            const video = document.getElementById('video-player');
+            // Since we don't have real videos, we'll just show a placeholder
+            video.src = 'https://www.w3schools.com/html/mov_bbb.mp4';
+            video.play();
+            document.getElementById('lecture-complete-overlay').classList.add('hidden');
+            
+            // Auto complete after 5 seconds for demo
+            setTimeout(() => {
+                document.getElementById('lecture-complete-overlay').classList.remove('hidden');
+            }, 5000);
+        }
+
+        async function markCompleteAndNext() {
+            await api(`/enrollments/progress/${activeLecture.id}`, { method: 'POST' });
+            
+            const currentIndex = activeCourse.lectures.findIndex(l => l.id === activeLecture.id);
+            if (currentIndex < activeCourse.lectures.length - 1) {
+                playLecture(activeCourse.lectures[currentIndex + 1]);
+            } else {
+                alert("Course Completed! 🎉");
+                closePlayer();
+            }
+        }
+
+        // Initialize
+        updateAuthUI();
+        fetchCategories();
+        fetchCourses();
+        
+        document.getElementById('overlay').onclick = () => {
+            toggleCart(false);
+            closeAuth();
+        };
+
+    </script>
+</body>
+</html>
+</body>
+</html>
