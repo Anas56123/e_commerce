@@ -17,6 +17,7 @@ class Enrollment(EnrollmentBase):
 class LectureProgressBase(BaseModel):
     lecture_id: int
     completed: bool
+    # playback_position: Optional[float] = 0.0
 
 class LectureProgress(LectureProgressBase):
     id: int
@@ -61,5 +62,29 @@ class Purchase(PurchaseBase):
     id: int
     user_id: int
     purchased_at: datetime
+    class Config:
+        from_attributes = True
+
+# class LectureNoteBase(BaseModel):
+#     lecture_id: int
+#     content: str
+#     timestamp: float
+
+# class LectureNote(LectureNoteBase):
+#     id: int
+#     user_id: int
+#     created_at: datetime
+#     class Config:
+#         from_attributes = True
+
+class CourseReviewBase(BaseModel):
+    course_id: int
+    rating: int
+    comment: Optional[str] = None
+
+class CourseReview(CourseReviewBase):
+    id: int
+    user_id: int
+    created_at: datetime
     class Config:
         from_attributes = True
