@@ -7,8 +7,6 @@ import datetime
 
 def seed():
     db = SessionLocal()
-    
-    # Create categories
     categories = [
         Category(name="Development", slug="development"),
         Category(name="Design", slug="design"),
@@ -19,19 +17,14 @@ def seed():
         if not db.query(Category).filter(Category.slug == cat.slug).first():
             db.add(cat)
     db.commit()
-    
-    # Create a dummy instructor if none exists
     instructor = db.query(User).filter(User.role == "instructor").first()
     if not instructor:
         instructor = User(username="pro_teacher", email="teacher@example.com", hashed_password="hashed_password", role="instructor")
         db.add(instructor)
         db.commit()
         db.refresh(instructor)
-    
-    # Create courses
     dev_cat = db.query(Category).filter(Category.slug == "development").first()
     design_cat = db.query(Category).filter(Category.slug == "design").first()
-    
     courses = [
         Course(
             title="Mastering FastAPI", 
@@ -64,8 +57,6 @@ def seed():
             db.add(c)
             db.commit()
             db.refresh(c)
-            
-            # Add some lectures
             for i in range(1, 4):
                 lecture = Lecture(
                     title=f"Lesson {i}: Getting Started with {c.title}",
@@ -74,8 +65,6 @@ def seed():
                     course_id=c.id
                 )
                 db.add(lecture)
-    
-    # Create a coupon
     if not db.query(Coupon).filter(Coupon.code == "SAVE20").first():
         coupon = Coupon(
             code="SAVE20",
@@ -90,3 +79,6 @@ def seed():
 
 if __name__ == "__main__":
     seed()
+
+
+# Since i am testing, i used AI to generate the data 😅 sry 3mou 3li 

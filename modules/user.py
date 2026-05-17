@@ -8,6 +8,6 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    role = Column(String, default="student") # student or instructor
-    provider = Column(String, default="local") # local, google, facebook, apple
+    role = Column(String, default="student")
+    provider = Column(String, default="local")
     provider_id = Column(String, nullable=True)

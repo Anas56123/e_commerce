@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from modules.course import Course as CourseModel
-from modules.interaction import CartItem as CartItemModel, WishlistItem as WishlistItemModel, Coupon as CouponModel, Enrollment as EnrollmentModel
+from modules.interaction import CartItem as CartItemModel, WishlistItem as WishlistItemModel, Coupon as CouponModel, Enrollment as EnrollmentModel, Purchase as PurchaseModel
 from modules.user import User as UserModel
-from schemas.interaction import CartItem, WishlistItem, Enrollment
+from schemas.interaction import CartItem, WishlistItem, Enrollment, Purchase
 from oauth2 import get_current_user
 from typing import List, Optional
 
@@ -51,7 +51,6 @@ def remove_from_cart(course_id: int, db: Session = Depends(get_db), current_user
 
 @router.post("/wishlist/{course_id}")
 def move_to_wishlist(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    # Remove from cart if exists
     cart_item = db.query(CartItemModel).filter(
         CartItemModel.user_id == current_user.id,
         CartItemModel.course_id == course_id
@@ -75,16 +74,30 @@ def move_to_wishlist(course_id: int, db: Session = Depends(get_db), current_user
 def get_wishlist(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     return db.query(WishlistItemModel).filter(WishlistItemModel.user_id == current_user.id).all()
 
+@router.get("/purchases", response_model=List[Purchase])
+def get_purchases(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    return db.query(PurchaseModel).filter(PurchaseModel.user_id == current_user.id).order_by(PurchaseModel.purchased_at.desc()).all()
+
 @router.post("/checkout")
 def checkout(coupon_code: Optional[str] = None, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     cart_items = db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).all()
     if not cart_items:
         raise HTTPException(status_code=400, detail="Cart is empty")
     
-    # Calculate total and enroll
-    # For now, we'll just enroll the user in all courses in the cart
+    discount = 0.0
+    if coupon_code:
+        coupon = db.query(CouponModel).filter(CouponModel.code == coupon_code, CouponModel.is_active == True).first()
+        if coupon:
+            discount = coupon.discount_percent / 100.0
+
     enrollments = []
     for item in cart_items:
+        course = db.query(CourseModel).filter(CourseModel.id == item.course_id).first()
+        if not course:
+            continue
+            
+        final_price = course.price * (1 - discount)
+        
         # Check if already enrolled
         existing_enrollment = db.query(EnrollmentModel).filter(
             EnrollmentModel.user_id == current_user.id,
@@ -95,6 +108,14 @@ def checkout(coupon_code: Optional[str] = None, db: Session = Depends(get_db), c
             new_enrollment = EnrollmentModel(user_id=current_user.id, course_id=item.course_id)
             db.add(new_enrollment)
             enrollments.append(new_enrollment)
+            
+            # Record purchase
+            new_purchase = PurchaseModel(
+                user_id=current_user.id,
+                course_id=item.course_id,
+                amount=final_price
+            )
+            db.add(new_purchase)
         
         db.delete(item)
     

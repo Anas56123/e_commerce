@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
@@ -13,35 +14,44 @@ from google.auth.transport import requests as google_requests #type: ignore
 import os
 from dotenv import load_dotenv
 load_dotenv()
+import httpx #type: ignore
+from jose import jwt, JWTError #type: ignore
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+APPLE_CLIENT_ID = os.getenv("APPLE_CLIENT_ID")
 
 router = APIRouter(
     tags=['Users']
 )
 
 @router.post("/register", response_model=UserResponse)
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.username == user.username).first()
+def register(
+    username: str = Form(...),
+    email: EmailStr = Form(...),
+    password: str = Form(...),
+    role: UserRole = Form(UserRole.student),
+    db: Session = Depends(get_db)
+):
+    db_user = db.query(User).filter(User.username == username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    db_email = db.query(User).filter(User.email == user.email).first()
+    db_email = db.query(User).filter(User.email == email).first()
     if db_email:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    if user.username == "":
+    if username == "":
         raise HTTPException(status_code=400, detail="Username cannot be empty")
     
-    if user.role not in ["student", "instructor"]:
-        user.role = "student"
+    if role not in ["student", "instructor"]:
+        role = UserRole.student
     
-    hashed_password = oauth2.hash_password(user.password)
+    hashed_password = oauth2.hash_password(password)
     new_user = User(
-        username=user.username, 
-        email=user.email, 
+        username=username, 
+        email=email, 
         hashed_password=hashed_password,
-        role=user.role
+        role=role
     )
     db.add(new_user)
     db.commit()
@@ -82,6 +92,96 @@ def google_auth(token: str, role: UserRole = UserRole.student, db: Session = Dep
             email=email,
             provider="google",
             role=role
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    access_token = oauth2.create_access_token(data={"user_id": user.id})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/auth/facebook")
+async def facebook_auth(token: str, db: Session = Depends(get_db)):
+    async with httpx.AsyncClient() as client:
+        response = httpx.get(
+            "https://graph.facebook.com/me",
+            params={
+                "fields": "id,name,email",
+                "access_token": token
+            }
+        )
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid Facebook token")
+    
+    fb_data = response.json()
+    
+    if "error" in fb_data:
+        raise HTTPException(status_code=401, detail="Invalid or expired Facebook token")
+
+    email = fb_data.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email not available from Facebook")
+
+    username = fb_data.get("name", email.split("@")[0])
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(
+            username=username,
+            email=email,
+            provider="facebook",
+            role="student"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    access_token = oauth2.create_access_token(data={"user_id": user.id})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/auth/apple")
+def apple_auth(token: str, db: Session = Depends(get_db)):
+    response = httpx.get("https://appleid.apple.com/auth/keys")
+    apple_keys = response.json()["keys"]
+
+    try:
+        header = jwt.get_unverified_header(token)
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid Apple token header")
+
+    public_key = None
+    for key in apple_keys:
+        if key["kid"] == header["kid"]:
+            public_key = key
+            break
+
+    if not public_key:
+        raise HTTPException(status_code=401, detail="Apple public key not found")
+
+    try:
+        payload = jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            audience=APPLE_CLIENT_ID
+        )
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid Apple token: {str(e)}")
+
+    email = payload.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email not available from Apple")
+
+    username = email.split("@")[0]
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(
+            username=username,
+            email=email,
+            provider="apple",
+            role="student"
         )
         db.add(user)
         db.commit()

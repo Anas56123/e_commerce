@@ -42,3 +42,11 @@ class Coupon(Base):
     discount_percent = Column(Float)
     expiry_date = Column(DateTime)
     is_active = Column(Boolean, default=True)
+
+class Purchase(Base):
+    __tablename__ = "purchases"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    course_id = Column(Integer, ForeignKey("courses.id"))
+    amount = Column(Float)
+    purchased_at = Column(DateTime, default=datetime.datetime.utcnow)

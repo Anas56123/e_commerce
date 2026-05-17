@@ -52,3 +52,14 @@ class Coupon(CouponBase):
     is_active: bool
     class Config:
         from_attributes = True
+
+class PurchaseBase(BaseModel):
+    course_id: int
+    amount: float
+
+class Purchase(PurchaseBase):
+    id: int
+    user_id: int
+    purchased_at: datetime
+    class Config:
+        from_attributes = True
