@@ -19,7 +19,6 @@ def enroll_in_course(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    # Check if already enrolled
     existing = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -27,7 +26,6 @@ def enroll_in_course(
     if existing:
         return existing
     
-    # Check if course exists
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -51,12 +49,10 @@ def mark_lecture_complete(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    # Check if lecture exists
     lecture = db.query(LectureModel).filter(LectureModel.id == lecture_id).first()
     if not lecture:
         raise HTTPException(status_code=404, detail="Lecture not found")
     
-    # Check if enrolled in the course
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == lecture.course_id
@@ -64,7 +60,6 @@ def mark_lecture_complete(
     if not enrollment:
         raise HTTPException(status_code=403, detail="You are not enrolled in this course")
     
-    # Update or create progress
     progress = db.query(ProgressModel).filter(
         ProgressModel.user_id == current_user.id,
         ProgressModel.lecture_id == lecture_id
@@ -78,7 +73,6 @@ def mark_lecture_complete(
     
     db.commit()
     
-    # Update overall course progress
     total_lectures = db.query(LectureModel).filter(LectureModel.course_id == lecture.course_id).count()
     completed_lectures = db.query(ProgressModel).join(LectureModel).filter(
         ProgressModel.user_id == current_user.id,

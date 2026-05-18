@@ -19,12 +19,10 @@ def get_cart(db: Session = Depends(get_db), current_user: UserModel = Depends(ge
 
 @router.post("/add/{course_id}")
 def add_to_cart(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    # Check if course exists
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     
-    # Check if already in cart
     existing = db.query(CartItemModel).filter(
         CartItemModel.user_id == current_user.id,
         CartItemModel.course_id == course_id
@@ -58,7 +56,6 @@ def move_to_wishlist(course_id: int, db: Session = Depends(get_db), current_user
     if cart_item:
         db.delete(cart_item)
     
-    # Add to wishlist
     existing = db.query(WishlistItemModel).filter(
         WishlistItemModel.user_id == current_user.id,
         WishlistItemModel.course_id == course_id
@@ -98,7 +95,6 @@ def checkout(coupon_code: Optional[str] = None, db: Session = Depends(get_db), c
             
         final_price = course.price * (1 - discount)
         
-        # Check if already enrolled
         existing_enrollment = db.query(EnrollmentModel).filter(
             EnrollmentModel.user_id == current_user.id,
             EnrollmentModel.course_id == item.course_id
@@ -109,7 +105,6 @@ def checkout(coupon_code: Optional[str] = None, db: Session = Depends(get_db), c
             db.add(new_enrollment)
             enrollments.append(new_enrollment)
             
-            # Record purchase
             new_purchase = PurchaseModel(
                 user_id=current_user.id,
                 course_id=item.course_id,

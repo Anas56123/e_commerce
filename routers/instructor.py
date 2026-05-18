@@ -18,11 +18,9 @@ router = APIRouter(
     tags=['Instructor Panel']
 )
 
-# ----------------- Dashboard & Analytics -----------------
 
 @router.get("/dashboard")
 def get_instructor_dashboard(db: Session = Depends(get_db), current_user: User = Depends(oauth2.check_role(["instructor"]))):
-    # Get all courses by this instructor
     courses = db.query(Course).filter(Course.instructor_id == current_user.id).all()
     course_ids = [c.id for c in courses]
 
@@ -34,19 +32,15 @@ def get_instructor_dashboard(db: Session = Depends(get_db), current_user: User =
             "revenue_by_month": []
         }
 
-    # Total Revenue
     total_revenue = db.query(func.sum(Purchase.amount)).filter(Purchase.course_id.in_(course_ids)).scalar() or 0.0
 
-    # Total unique students
     total_students = db.query(func.count(func.distinct(Enrollment.user_id))).filter(Enrollment.course_id.in_(course_ids)).scalar() or 0
 
-    # Course analytics list
     courses_analytics = []
     for c in courses:
         enrollment_count = db.query(func.count(Enrollment.id)).filter(Enrollment.course_id == c.id).scalar() or 0
         revenue = db.query(func.sum(Purchase.amount)).filter(Purchase.course_id == c.id).scalar() or 0.0
         
-        # Average rating
         avg_rating = db.query(func.avg(CourseReview.rating)).filter(CourseReview.course_id == c.id).scalar()
         avg_rating = round(avg_rating, 2) if avg_rating else 0.0
         
@@ -60,13 +54,10 @@ def get_instructor_dashboard(db: Session = Depends(get_db), current_user: User =
             "average_rating": avg_rating
         })
 
-    # Revenue by month (Mocked database monthly summation using purchase records)
-    # We aggregate purchases over the last 6 months
     revenue_by_month = []
     months_map = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", 
                   7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"}
     
-    # Simple aggregation of purchases in DB for this instructor's courses
     purchases = db.query(
         func.extract('month', Purchase.purchased_at).label('month'),
         func.sum(Purchase.amount).label('monthly_sum')
@@ -79,7 +70,6 @@ def get_instructor_dashboard(db: Session = Depends(get_db), current_user: User =
             "revenue": p.monthly_sum
         })
 
-    # If no real data, fill with standard mock values for high-fidelity UI demonstration
     if not revenue_by_month:
         revenue_by_month = [
             {"month": "Jan", "revenue": total_revenue * 0.1},
@@ -97,9 +87,7 @@ def get_instructor_dashboard(db: Session = Depends(get_db), current_user: User =
         "revenue_by_month": revenue_by_month
     }
 
-# ----------------- 4-Step Wizard Course Creator -----------------
 
-# Step 1: Basic Info
 @router.post("/courses/step1", response_model=CourseSchema)
 def course_creator_step1(course: CourseCreate, db: Session = Depends(get_db), current_user: User = Depends(oauth2.check_role(["instructor"]))):
     category = db.query(Category).filter(Category.id == course.category_id).first()
@@ -113,14 +101,14 @@ def course_creator_step1(course: CourseCreate, db: Session = Depends(get_db), cu
         thumbnail=course.thumbnail,
         category_id=course.category_id,
         instructor_id=current_user.id,
-        status="draft" # Wizard starts with draft
+        status="draft"
     )
     db.add(new_course)
     db.commit()
     db.refresh(new_course)
     return new_course
 
-# Step 2: Advanced Info
+
 @router.put("/courses/{course_id}/step2", response_model=CourseSchema)
 def course_creator_step2(
     course_id: int, 
@@ -142,7 +130,7 @@ def course_creator_step2(
     db.refresh(course)
     return course
 
-# Step 3: Curriculum - Add Section
+
 @router.post("/courses/{course_id}/sections", response_model=SectionSchema)
 def add_section(
     course_id: int, 
@@ -164,7 +152,7 @@ def add_section(
     db.refresh(new_section)
     return new_section
 
-# Step 3: Curriculum - Add Lecture to Section
+
 @router.post("/sections/{section_id}/lectures", response_model=LectureSchema)
 def add_lecture_to_section(
     section_id: int, 
@@ -192,9 +180,8 @@ def add_lecture_to_section(
     db.refresh(new_lecture)
     return new_lecture
 
-# Async encoding simulation helper
-# # Async encoding simulation helper
-# def simulate_video_encoding(lecture_id: int, filename: str, db_session_factory):
+
+# # def simulate_video_encoding(lecture_id: int, filename: str, db_session_factory):
 #     # Simulate a delay for transcoding a video to HLS (.m3u8)
 #     time.sleep(10)
 #     db = next(db_session_factory())
@@ -270,7 +257,7 @@ def add_lecture_to_section(
 #     db.commit()
 #     return {"message": "Captions added successfully", "captions_url": captions_url}
 
-# Step 4: Publish
+
 @router.put("/courses/{course_id}/publish", response_model=CourseSchema)
 def publish_course(
     course_id: int, 
@@ -282,7 +269,6 @@ def publish_course(
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or unauthorized")
         
-    # Validation before publish: ensure it has at least one section and lecture
     if publish:
         sections_count = db.query(Section).filter(Section.course_id == course_id).count()
         if sections_count == 0:
