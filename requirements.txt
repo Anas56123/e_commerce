@@ -3,3 +3,6 @@ passlib[bcrypt]
 python-jose[cryptography]
 psycopg2-binary
 google-auth
+stripe
+websockets
+sqlalchemy

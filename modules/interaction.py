@@ -20,18 +20,20 @@ class LectureProgress(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     lecture_id = Column(Integer, ForeignKey("lectures.id"))
     completed = Column(Boolean, default=False)
-    # playback_position = Column(Float, default=0.0)
+    playback_position = Column(Float, default=0.0)
 
     lecture = relationship("Lecture", back_populates="progress")
 
-# class LectureNote(Base):
-#     __tablename__ = "lecture_notes"
-#     id = Column(Integer, primary_key=True, index=True)
-#     user_id = Column(Integer, ForeignKey("users.id"))
-#     lecture_id = Column(Integer, ForeignKey("lectures.id"))
-#     content = Column(String)
-#     timestamp = Column(Float, default=0.0) # Timestamp in the video where the note was taken
-#     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+class LectureNote(Base):
+    __tablename__ = "lecture_notes"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    lecture_id = Column(Integer, ForeignKey("lectures.id"))
+    content = Column(String)
+    timestamp = Column(Float, default=0.0) # Timestamp in the video where the note was taken
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
 
 class CourseReview(Base):
     __tablename__ = "course_reviews"

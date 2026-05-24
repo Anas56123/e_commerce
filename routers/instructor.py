@@ -180,82 +180,101 @@ def add_lecture_to_section(
     db.refresh(new_lecture)
     return new_lecture
 
+def simulate_video_encoding(lecture_id: int, filename: str, db_session_factory):
+    time.sleep(10)
+    db = next(db_session_factory())
+    try:
+        lecture = db.query(Lecture).filter(Lecture.id == lecture_id).first()
+        if lecture:
+            lecture.video_status = "ready"
+            lecture.content_url = f"https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8"
+            db.commit()
+    except Exception as e:
+        print(f"Error during video encoding simulation: {e}")
+    finally:
+        db.close()
 
-# # def simulate_video_encoding(lecture_id: int, filename: str, db_session_factory):
-#     # Simulate a delay for transcoding a video to HLS (.m3u8)
-#     time.sleep(10)
-#     db = next(db_session_factory())
-#     try:
-#         lecture = db.query(Lecture).filter(Lecture.id == lecture_id).first()
-#         if lecture:
-#             # Successfully transcoded to HLS!
-#             lecture.video_status = "ready"
-#             lecture.content_url = f"https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8"
-#             db.commit()
-#     except Exception as e:
-#         print(f"Error during video encoding simulation: {e}")
-#     finally:
-#         db.close()
+@router.post("/lectures/{lecture_id}/video")
+def upload_lecture_video(
+    lecture_id: int, 
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(oauth2.check_role(["instructor"]))
+):
+    lecture = db.query(Lecture).filter(Lecture.id == lecture_id).first()
+    if not lecture:
+        raise HTTPException(status_code=404, detail="Lecture not found")
+        
+    course = db.query(Course).filter(Course.id == lecture.course_id, Course.instructor_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
-# # Step 3: Curriculum - Upload Video with Async Encoding
-# @router.post("/lectures/{lecture_id}/video")
-# def upload_lecture_video(
-#     lecture_id: int, 
-#     background_tasks: BackgroundTasks,
-#     file: UploadFile = File(...), 
-#     db: Session = Depends(get_db), 
-#     current_user: User = Depends(oauth2.check_role(["instructor"]))
-# ):
-#     lecture = db.query(Lecture).filter(Lecture.id == lecture_id).first()
-#     if not lecture:
-#         raise HTTPException(status_code=404, detail="Lecture not found")
-#         
-#     course = db.query(Course).filter(Course.id == lecture.course_id, Course.instructor_id == current_user.id).first()
-#     if not course:
-#         raise HTTPException(status_code=403, detail="Unauthorized")
+    os.makedirs("static/uploads/videos", exist_ok=True)
+    file_location = f"static/uploads/videos/{lecture_id}_{file.filename}"
+    with open(file_location, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
-#     # In a real environment, we write the file locally
-#     os.makedirs("static/uploads/videos", exist_ok=True)
-#     file_location = f"static/uploads/videos/{lecture_id}_{file.filename}"
-#     with open(file_location, "wb") as buffer:
-#         shutil.copyfileobj(file.file, buffer)
+    lecture.video_status = "processing"
+    db.commit()
 
-#     # Set video status to processing
-#     lecture.video_status = "processing"
-#     db.commit()
+    background_tasks.add_task(simulate_video_encoding, lecture_id, file.filename, get_db)
 
-#     # Trigger background async video encoding to HLS
-#     background_tasks.add_task(
-#         simulate_video_encoding, 
-#         lecture_id, 
-#         file.filename, 
-#         get_db
-#     )
+    return {"message": "Video uploaded successfully. HLS encoding started asynchronously.", "video_status": "processing"}
 
-#     return {
-#         "message": "Video uploaded successfully. HLS encoding started asynchronously in the background.",
-#         "video_status": "processing"
-#     }
+@router.post("/lectures/{lecture_id}/captions")
+def add_lecture_captions(
+    lecture_id: int, 
+    captions_url: str = Form(...),
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(oauth2.check_role(["instructor"]))
+):
+    lecture = db.query(Lecture).filter(Lecture.id == lecture_id).first()
+    if not lecture:
+        raise HTTPException(status_code=404, detail="Lecture not found")
+        
+    course = db.query(Course).filter(Course.id == lecture.course_id, Course.instructor_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+        
+    lecture.captions_url = captions_url
+    db.commit()
+    return {"message": "Captions added successfully", "captions_url": captions_url}
 
-# # Step 3: Curriculum - Add Captions
-# @router.post("/lectures/{lecture_id}/captions")
-# def add_lecture_captions(
-#     lecture_id: int, 
-#     captions_url: str = Form(...),
-#     db: Session = Depends(get_db), 
-#     current_user: User = Depends(oauth2.check_role(["instructor"]))
-# ):
-#     lecture = db.query(Lecture).filter(Lecture.id == lecture_id).first()
-#     if not lecture:
-#         raise HTTPException(status_code=404, detail="Lecture not found")
-#         
-#     course = db.query(Course).filter(Course.id == lecture.course_id, Course.instructor_id == current_user.id).first()
-#     if not course:
-#         raise HTTPException(status_code=403, detail="Unauthorized")
-#         
-#     lecture.captions_url = captions_url
-#     db.commit()
-#     return {"message": "Captions added successfully", "captions_url": captions_url}
+@router.post("/lectures/{lecture_id}/attachments")
+def add_lecture_attachment(
+    lecture_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(oauth2.check_role(["instructor"]))
+):
+    from modules.course import LectureAttachment
+    
+    lecture = db.query(Lecture).filter(Lecture.id == lecture_id).first()
+    if not lecture:
+        raise HTTPException(status_code=404, detail="Lecture not found")
+        
+    course = db.query(Course).filter(Course.id == lecture.course_id, Course.instructor_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+        
+    os.makedirs("static/uploads/attachments", exist_ok=True)
+    file_location = f"static/uploads/attachments/{lecture_id}_{file.filename}"
+    with open(file_location, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    new_attachment = LectureAttachment(
+        lecture_id=lecture_id,
+        file_name=file.filename,
+        file_url=f"/{file_location}"
+    )
+    db.add(new_attachment)
+    db.commit()
+    db.refresh(new_attachment)
+    return new_attachment
+
+
+
 
 
 @router.put("/courses/{course_id}/publish", response_model=CourseSchema)

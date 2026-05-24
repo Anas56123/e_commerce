@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from pydantic_settings import BaseSettings, SettingsConfigDict #type:ignore
 
 class EnrollmentBase(BaseModel):
     course_id: int
@@ -17,7 +18,7 @@ class Enrollment(EnrollmentBase):
 class LectureProgressBase(BaseModel):
     lecture_id: int
     completed: bool
-    # playback_position: Optional[float] = 0.0
+    playback_position: Optional[float] = 0.0
 
 class LectureProgress(LectureProgressBase):
     id: int
@@ -65,17 +66,19 @@ class Purchase(PurchaseBase):
     class Config:
         from_attributes = True
 
-# class LectureNoteBase(BaseModel):
-#     lecture_id: int
-#     content: str
-#     timestamp: float
+class LectureNoteBase(BaseModel):
+    lecture_id: int
+    content: str
+    timestamp: float
 
-# class LectureNote(LectureNoteBase):
-#     id: int
-#     user_id: int
-#     created_at: datetime
-#     class Config:
-#         from_attributes = True
+class LectureNote(LectureNoteBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
 
 class CourseReviewBase(BaseModel):
     course_id: int
@@ -88,3 +91,11 @@ class CourseReview(CourseReviewBase):
     created_at: datetime
     class Config:
         from_attributes = True
+
+class Settings(BaseSettings):
+    stripe_secret_key: str
+    stripe_publishable_key: str
+    stripe_webhook_secret: str
+    domain: str = "http://localhost:8000" 
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")

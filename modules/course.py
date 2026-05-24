@@ -46,21 +46,23 @@ class Lecture(Base):
     order = Column(Integer)
     course_id = Column(Integer, ForeignKey("courses.id"))
     section_id = Column(Integer, ForeignKey("sections.id"), nullable=True)
+    video_status = Column(String, default="pending") # pending, processing, ready, failed
+    captions_url = Column(String, nullable=True)
     
-    # New fields for advanced curriculum builder
-    # video_status = Column(String, default="pending") # pending, processing, ready, failed
-    # captions_url = Column(String, nullable=True)
+
 
     course = relationship("Course", back_populates="lectures")
     section = relationship("Section", back_populates="lectures")
     progress = relationship("LectureProgress", back_populates="lecture")
-    # attachments = relationship("LectureAttachment", back_populates="lecture", cascade="all, delete-orphan")
+    attachments = relationship("LectureAttachment", back_populates="lecture", cascade="all, delete-orphan")
 
-# class LectureAttachment(Base):
-#     __tablename__ = "lecture_attachments"
-#     id = Column(Integer, primary_key=True, index=True)
-#     lecture_id = Column(Integer, ForeignKey("lectures.id"))
-#     file_name = Column(String)
-#     file_url = Column(String)
-#     
-#     lecture = relationship("Lecture", back_populates="attachments")
+class LectureAttachment(Base):
+    __tablename__ = "lecture_attachments"
+    id = Column(Integer, primary_key=True, index=True)
+    lecture_id = Column(Integer, ForeignKey("lectures.id"))
+    file_name = Column(String)
+    file_url = Column(String)
+    
+    lecture = relationship("Lecture", back_populates="attachments")
+
+

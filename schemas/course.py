@@ -21,26 +21,28 @@ class LectureBase(BaseModel):
 class LectureCreate(LectureBase):
     course_id: int
 
-# class LectureAttachmentBase(BaseModel):
-#     file_name: str
-#     file_url: str
+class LectureAttachmentBase(BaseModel):
+    file_name: str
+    file_url: str
 
-# class LectureAttachmentCreate(LectureAttachmentBase):
-#     lecture_id: int
+class LectureAttachmentCreate(LectureAttachmentBase):
+    lecture_id: int
 
-# class LectureAttachment(LectureAttachmentBase):
-#     id: int
-#     lecture_id: int
-#     class Config:
-#         from_attributes = True
+class LectureAttachment(LectureAttachmentBase):
+    id: int
+    lecture_id: int
+    class Config:
+        from_attributes = True
+
+
 
 class Lecture(LectureBase):
     id: int
     course_id: int
     section_id: Optional[int] = None
-    # video_status: str = "pending"
-    # captions_url: Optional[str] = None
-    # attachments: List[LectureAttachment] = []
+    video_status: str = "pending"
+    captions_url: Optional[str] = None
+    attachments: List[LectureAttachment] = []
     class Config:
         from_attributes = True
 
