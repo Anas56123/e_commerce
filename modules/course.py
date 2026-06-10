@@ -42,11 +42,11 @@ class Lecture(Base):
     __tablename__ = "lectures"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
-    content_url = Column(String, nullable=True) # URL to video or text content
+    content_url = Column(String, nullable=True) 
     order = Column(Integer)
     course_id = Column(Integer, ForeignKey("courses.id"))
     section_id = Column(Integer, ForeignKey("sections.id"), nullable=True)
-    video_status = Column(String, default="pending") # pending, processing, ready, failed
+    video_status = Column(String, default="pending")
     captions_url = Column(String, nullable=True)
     
 

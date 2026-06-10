@@ -1,12 +1,5 @@
-"""
-Tests for Public endpoints:
-  GET  /api/v1/public/about
-  POST /api/v1/public/contact
-  GET  /api/v1/public/careers
-  POST /api/v1/public/careers/{job_id}/apply
-"""
 import io
-import pytest
+import pytest #type:ignore
 
 
 class TestAbout:
@@ -40,7 +33,7 @@ class TestContact:
 
     def test_submit_contact_missing_fields(self, client):
         resp = client.post("/api/v1/public/contact", json={"name": "John"})
-        assert resp.status_code == 422  # Pydantic validation error
+        assert resp.status_code == 422 
 
 
 class TestCareers:
@@ -63,7 +56,6 @@ class TestCareers:
         assert "job listing not found" in resp.json()["detail"].lower()
 
     def test_apply_missing_resume(self, client):
-        """Applying without uploading a resume should return 422."""
         resp = client.post(
             "/api/v1/public/careers/1/apply",
             data={

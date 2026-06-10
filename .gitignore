@@ -1,1 +1,6 @@
 /.env
+__pycache__/
+/modules/__pycache__/
+/routers/__pycache__/
+/schemas/__pycache__/
+/test/__pycache__/

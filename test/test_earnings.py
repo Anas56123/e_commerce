@@ -1,12 +1,4 @@
-"""
-Tests for Earnings endpoints (instructor only):
-  GET  /api/v1/earnings/balance
-  GET  /api/v1/earnings/payout-methods
-  POST /api/v1/earnings/payout-methods
-  POST /api/v1/earnings/withdraw
-  GET  /api/v1/earnings/withdrawals
-"""
-import pytest
+import pytest #type:ignore
 from conftest import auth_headers
 
 
@@ -72,12 +64,9 @@ class TestWithdrawals:
         assert resp.status_code == 403
 
     def test_withdraw_no_payout_method(self, client):
-        """A fresh instructor with no payout method should get 400."""
-        # Register new instructor
         client.post("/register", data={"username": "nopayout_inst", "email": "nopayout@mail.com", "password": "pass", "role": "instructor"})
         token = client.post("/login", data={"username": "nopayout_inst", "password": "pass"}).json()["access_token"]
         resp = client.post("/api/v1/earnings/withdraw", json={"amount": 1.0}, headers=auth_headers(token))
-        # Either 400 (no payout method) or 400 (insufficient funds)
         assert resp.status_code == 400
 
     def test_withdraw_insufficient_funds(self, client, instructor_token):

@@ -30,7 +30,7 @@ class LectureNote(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     lecture_id = Column(Integer, ForeignKey("lectures.id"))
     content = Column(String)
-    timestamp = Column(Float, default=0.0) # Timestamp in the video where the note was taken
+    timestamp = Column(Float, default=0.0) 
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
@@ -40,7 +40,7 @@ class CourseReview(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     course_id = Column(Integer, ForeignKey("courses.id"))
-    rating = Column(Integer) # 1 to 5
+    rating = Column(Integer)
     comment = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 

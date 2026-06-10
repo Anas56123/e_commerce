@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Dict
 from database import get_db, SessionLocal
 from modules.messaging import Message
 from modules.user import User
 from schemas.messaging import Message as MessageSchema
-from oauth2 import get_current_user
+from oauth2 import get_current_user, verify_access_token
 import json
 
 router = APIRouter(
@@ -15,7 +15,6 @@ router = APIRouter(
 
 class ConnectionManager:
     def __init__(self):
-        # Maps user_id to WebSocket
         self.active_connections: Dict[int, WebSocket] = {}
 
     async def connect(self, websocket: WebSocket, user_id: int):
@@ -33,13 +32,16 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-# Use query param for token since headers are tricky in JS WebSockets
 @router.websocket("/ws/{token}")
 async def websocket_endpoint(websocket: WebSocket, token: str):
-    # Authenticate token manually
     db = SessionLocal()
     try:
-        user = get_current_user(token, db)
+        try:
+            token_data = verify_access_token(token)
+            user = db.query(User).filter(User.id == token_data.id).first()
+        except HTTPException:
+            user = None
+
         if not user:
             await websocket.close(code=1008)
             return
@@ -49,13 +51,11 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         try:
             while True:
                 data = await websocket.receive_text()
-                # Expected JSON: {"receiver_id": 1, "content": "Hello"}
                 payload = json.loads(data)
                 receiver_id = payload.get("receiver_id")
                 content = payload.get("content")
                 
                 if receiver_id and content:
-                    # Save to DB
                     new_msg = Message(
                         sender_id=user.id,
                         receiver_id=receiver_id,
@@ -65,7 +65,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                     db.commit()
                     db.refresh(new_msg)
                     
-                    # Send to receiver if online
                     message_data = json.dumps({
                         "sender_id": user.id,
                         "content": content,

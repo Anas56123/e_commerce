@@ -1,12 +1,4 @@
-"""
-Tests for Video Player endpoints:
-  GET  /api/v1/player/stream/{lecture_id}
-  POST /api/v1/player/progress/{lecture_id}
-  GET  /api/v1/player/notes/{lecture_id}
-  POST /api/v1/player/notes/{lecture_id}
-  GET  /api/v1/player/attachments/{lecture_id}
-"""
-import pytest
+import pytest #type:ignore
 from conftest import auth_headers
 
 
@@ -21,8 +13,6 @@ class TestPlayerStream:
         assert resp.json()["detail"] == "Lecture not found"
 
     def test_stream_not_enrolled(self, client, student_token, instructor_token):
-        """Student not enrolled in course should get 403."""
-        # Create course + section + lecture
         c = client.post(
             "/api/v1/instructor/courses/step1",
             json={"title": "Player Course", "description": "desc", "price": 0.0, "category_id": 1},
@@ -46,7 +36,6 @@ class TestPlayerStream:
         )
         lecture_id = l.json()["id"]
 
-        # Fresh student — not enrolled
         client.post("/register", data={"username": "streamstudent", "email": "ss@mail.com", "password": "pass", "role": "student"})
         token = client.post("/login", data={"username": "streamstudent", "password": "pass"}).json()["access_token"]
 
@@ -54,7 +43,6 @@ class TestPlayerStream:
         assert resp.status_code == 403
 
     def test_stream_enrolled_student(self, client, student_token, instructor_token):
-        """Enrolled student should receive a signed URL."""
         c = client.post(
             "/api/v1/instructor/courses/step1",
             json={"title": "Stream Me", "description": "desc", "price": 0.0, "category_id": 1},
@@ -78,7 +66,6 @@ class TestPlayerStream:
         )
         lecture_id = l.json()["id"]
 
-        # Enroll the student
         client.post(f"/api/v1/enrollments/{course_id}", headers=auth_headers(student_token))
 
         resp = client.get(f"/api/v1/player/stream/{lecture_id}", headers=auth_headers(student_token))

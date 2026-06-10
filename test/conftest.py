@@ -1,12 +1,6 @@
-"""
-Shared pytest fixtures for the e-commerce API test suite.
-
-Uses an in-memory SQLite database so tests never touch production Postgres.
-"""
 import sys
 import os
 
-# Make sure the project root is on PYTHONPATH so all imports resolve
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
@@ -17,9 +11,6 @@ from sqlalchemy.orm import sessionmaker
 from database import Base, get_db
 from main import app
 
-# --------------------------------------------------------------------------- #
-#  In-memory SQLite engine (isolated per test session)                        #
-# --------------------------------------------------------------------------- #
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test/test.db"
 
 engine = create_engine(
@@ -41,7 +32,6 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_database():
-    """Create all tables before the test session and drop them after."""
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -49,17 +39,11 @@ def create_test_database():
 
 @pytest.fixture(scope="session")
 def client():
-    """Return a TestClient that shares a single DB across the session."""
     with TestClient(app) as c:
         yield c
 
 
-# --------------------------------------------------------------------------- #
-#  Reusable helpers to register users and obtain JWT tokens                   #
-# --------------------------------------------------------------------------- #
-
 def register_and_login(client: TestClient, username: str, email: str, password: str, role: str = "student") -> str:
-    """Register a user (if not already existing) and return a Bearer token."""
     client.post(
         "/register",
         data={"username": username, "email": email, "password": password, "role": role},

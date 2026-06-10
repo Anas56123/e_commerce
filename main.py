@@ -5,7 +5,6 @@ from database import engine, Base
 from modules import user, course, interaction, earning, messaging, public
 from routers import user as user_router_mod, course as course_router_mod, enrollment as enrollment_router_mod, cart as cart_router_mod, review as review_router_mod, instructor as instructor_router_mod, player as player_router_mod, earnings as earnings_router_mod, chat as chat_router_mod, public as public_router_mod
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(

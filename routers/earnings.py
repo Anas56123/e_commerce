@@ -17,14 +17,12 @@ router = APIRouter(
 
 @router.get("/balance")
 def get_balance(db: Session = Depends(get_db), current_user: User = Depends(oauth2.check_role(["instructor"]))):
-    # Calculate 80% of revenue
     courses = db.query(Course).filter(Course.instructor_id == current_user.id).all()
     course_ids = [c.id for c in courses]
     
     total_revenue = db.query(func.sum(Purchase.amount)).filter(Purchase.course_id.in_(course_ids)).scalar() or 0.0
     instructor_share = total_revenue * 0.8
     
-    # Calculate withdrawn amount
     withdrawn = db.query(func.sum(WithdrawalRequest.amount)).filter(
         WithdrawalRequest.user_id == current_user.id,
         WithdrawalRequest.status.in_(["approved", "paid", "pending"])
@@ -45,7 +43,6 @@ def get_payout_methods(db: Session = Depends(get_db), current_user: User = Depen
 @router.post("/payout-methods", response_model=PayoutMethodSchema)
 def add_payout_method(method: PayoutMethodCreate, db: Session = Depends(get_db), current_user: User = Depends(oauth2.check_role(["instructor"]))):
     if method.is_default == 1:
-        # Unset others
         db.query(PayoutMethod).filter(PayoutMethod.user_id == current_user.id).update({"is_default": 0})
         
     new_method = PayoutMethod(
@@ -61,7 +58,6 @@ def add_payout_method(method: PayoutMethodCreate, db: Session = Depends(get_db),
 
 @router.post("/withdraw", response_model=WithdrawalRequestSchema)
 def request_withdrawal(req: WithdrawalRequestCreate, db: Session = Depends(get_db), current_user: User = Depends(oauth2.check_role(["instructor"]))):
-    # Check balance
     courses = db.query(Course).filter(Course.instructor_id == current_user.id).all()
     course_ids = [c.id for c in courses]
     total_revenue = db.query(func.sum(Purchase.amount)).filter(Purchase.course_id.in_(course_ids)).scalar() or 0.0

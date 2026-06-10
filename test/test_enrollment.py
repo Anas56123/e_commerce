@@ -1,10 +1,4 @@
-"""
-Tests for Enrollment endpoints:
-  POST /api/v1/enrollments/{course_id}
-  GET  /api/v1/enrollments/my-courses
-  POST /api/v1/enrollments/progress/{lecture_id}
-"""
-import pytest
+import pytest #type:ignore
 from conftest import auth_headers
 
 
@@ -28,8 +22,6 @@ class TestEnrollments:
         assert resp.status_code == 401
 
     def test_enroll_idempotent(self, client, student_token, instructor_token):
-        """Enrolling in the same course twice should return the existing enrollment."""
-        # Create a course to enroll in
         create_resp = client.post(
             "/api/v1/instructor/courses/step1",
             json={"title": "Enroll Test Course", "description": "desc", "price": 0.0, "category_id": 1},
@@ -57,8 +49,6 @@ class TestLectureProgress:
         assert resp.status_code == 401
 
     def test_mark_progress_not_enrolled(self, client, student_token, instructor_token):
-        """Marking progress without enrollment should return 403."""
-        # Create course + section + lecture
         c = client.post(
             "/api/v1/instructor/courses/step1",
             json={"title": "Progress Course", "description": "desc", "price": 0.0, "category_id": 1},
@@ -86,7 +76,6 @@ class TestLectureProgress:
             pytest.skip("Could not create lecture")
         lecture_id = l.json()["id"]
 
-        # Register a fresh student not enrolled in this course
         client.post("/register", data={"username": "notenrolled", "email": "ne@mail.com", "password": "pass", "role": "student"})
         token = client.post("/login", data={"username": "notenrolled", "password": "pass"}).json()["access_token"]
 

@@ -1,20 +1,5 @@
-"""
-Tests for Instructor Panel endpoints:
-  GET  /api/v1/instructor/dashboard
-  POST /api/v1/instructor/courses/step1
-  PUT  /api/v1/instructor/courses/{course_id}/step2
-  POST /api/v1/instructor/courses/{course_id}/sections
-  POST /api/v1/instructor/sections/{section_id}/lectures
-  POST /api/v1/instructor/lectures/{lecture_id}/captions
-  PUT  /api/v1/instructor/courses/{course_id}/publish
-"""
-import pytest
+import pytest #type:ignore
 from conftest import auth_headers
-
-
-# --------------------------------------------------------------------------- #
-#  Helpers                                                                    #
-# --------------------------------------------------------------------------- #
 
 def create_course(client, instructor_token, title="Instructor Course"):
     return client.post(
@@ -22,11 +7,6 @@ def create_course(client, instructor_token, title="Instructor Course"):
         json={"title": title, "description": "desc", "price": 49.99, "category_id": 1},
         headers=auth_headers(instructor_token),
     )
-
-
-# --------------------------------------------------------------------------- #
-#  Dashboard                                                                  #
-# --------------------------------------------------------------------------- #
 
 class TestInstructorDashboard:
     def test_dashboard_requires_instructor(self, client, student_token):
@@ -47,10 +27,6 @@ class TestInstructorDashboard:
         assert "revenue_by_month" in body
 
 
-# --------------------------------------------------------------------------- #
-#  Course Creation (step1)                                                    #
-# --------------------------------------------------------------------------- #
-
 class TestInstructorCourseStep1:
     def test_create_course_student_forbidden(self, client, student_token):
         resp = create_course(client, student_token)
@@ -65,13 +41,8 @@ class TestInstructorCourseStep1:
 
     def test_create_course_missing_category(self, client, instructor_token):
         resp = create_course(client, instructor_token, title="Bad Category Course")
-        # category_id=1 may not exist → 404 is acceptable
         assert resp.status_code in (200, 404)
 
-
-# --------------------------------------------------------------------------- #
-#  Course Step 2                                                              #
-# --------------------------------------------------------------------------- #
 
 class TestInstructorCourseStep2:
     def test_update_step2_nonexistent_course(self, client, instructor_token):
@@ -89,14 +60,8 @@ class TestInstructorCourseStep2:
         assert resp.status_code == 403
 
 
-# --------------------------------------------------------------------------- #
-#  Sections                                                                   #
-# --------------------------------------------------------------------------- #
-
 class TestInstructorSections:
     def test_add_section_nonexistent_course(self, client, instructor_token):
-        # SectionCreate requires course_id in the body; when the course doesn't
-        # exist the router returns 404. With body missing course_id it returns 422.
         resp = client.post(
             "/api/v1/instructor/courses/999999/sections",
             json={"title": "Section 1", "order": 1, "course_id": 999999},
@@ -127,10 +92,6 @@ class TestInstructorSections:
         assert resp.json()["title"] == "Section Alpha"
 
 
-# --------------------------------------------------------------------------- #
-#  Lectures                                                                   #
-# --------------------------------------------------------------------------- #
-
 class TestInstructorLectures:
     def test_add_lecture_nonexistent_section(self, client, instructor_token):
         resp = client.post(
@@ -149,7 +110,6 @@ class TestInstructorLectures:
         assert resp.status_code == 403
 
     def test_add_lecture_success(self, client, instructor_token):
-        # Create course → section → lecture
         c = create_course(client, instructor_token, title="Lecture Test Course")
         if c.status_code != 200:
             pytest.skip("Could not create course")
@@ -171,10 +131,6 @@ class TestInstructorLectures:
         assert resp.json()["title"] == "Intro Lecture"
 
 
-# --------------------------------------------------------------------------- #
-#  Captions                                                                   #
-# --------------------------------------------------------------------------- #
-
 class TestInstructorCaptions:
     def test_add_captions_nonexistent_lecture(self, client, instructor_token):
         resp = client.post(
@@ -192,10 +148,6 @@ class TestInstructorCaptions:
         )
         assert resp.status_code == 403
 
-
-# --------------------------------------------------------------------------- #
-#  Publish                                                                    #
-# --------------------------------------------------------------------------- #
 
 class TestInstructorPublish:
     def test_publish_nonexistent_course(self, client, instructor_token):
@@ -224,7 +176,6 @@ class TestInstructorPublish:
             pytest.skip("Could not create course")
         course_id = c.json()["id"]
 
-        # Add a section
         client.post(
             f"/api/v1/instructor/courses/{course_id}/sections",
             json={"title": "Section 1", "order": 1, "course_id": course_id},

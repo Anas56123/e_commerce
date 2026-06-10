@@ -155,12 +155,10 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None),
             
         course_ids = [int(cid) for cid in course_ids_str.split(',')]
         
-        # Calculate amount per course for purchase record
         total_amount = session.get('amount_total', 0) / 100.0
         amount_per_course = total_amount / len(course_ids) if course_ids else 0
         
         for course_id in course_ids:
-            # Check if already enrolled
             existing_enrollment = db.query(EnrollmentModel).filter(
                 EnrollmentModel.user_id == user_id,
                 EnrollmentModel.course_id == course_id
@@ -177,7 +175,6 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None),
                 )
                 db.add(new_purchase)
                 
-            # Remove from cart
             cart_item = db.query(CartItemModel).filter(
                 CartItemModel.user_id == user_id,
                 CartItemModel.course_id == course_id

@@ -10,7 +10,7 @@ Tests for User endpoints:
   POST /forgot-password
   POST /reset-password
 """
-import pytest
+import pytest #type:ignore
 from conftest import auth_headers
 
 
