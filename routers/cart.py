@@ -13,15 +13,26 @@ settings = Settings()
 stripe.api_key = settings.stripe_secret_key
 
 router = APIRouter(
-    prefix="/api/v1/cart",
+    prefix="/api/v1/my_cart",
     tags=["Shopping Cart"]
 )
 
-@router.get("/", response_model=List[CartItem])
-def get_cart(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    return db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).all()
+@router.get("/", response_model=dict)
+def get_cart(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user), page: int = 1, limit: int = 10):
+    query = db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id)
+    total_count = query.count()
+    total_pages = (total_count + limit - 1) // limit if limit > 0 else 1
+    skip = (page - 1) * limit
+    data = query.offset(skip).limit(limit).all()
+    return {
+        "items": [CartItem.model_validate(c).model_dump() for c in data],
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "page": page,
+        "limit": limit
+    }
 
-@router.post("/add/{course_id}")
+@router.post("/add/{course_id}", response_model=dict)
 def add_to_cart(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
@@ -39,7 +50,7 @@ def add_to_cart(course_id: int, db: Session = Depends(get_db), current_user: Use
     db.commit()
     return {"message": "Added to cart"}
 
-@router.delete("/remove/{course_id}")
+@router.delete("/remove/{course_id}", response_model=dict)
 def remove_from_cart(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     item = db.query(CartItemModel).filter(
         CartItemModel.user_id == current_user.id,
@@ -51,7 +62,7 @@ def remove_from_cart(course_id: int, db: Session = Depends(get_db), current_user
     db.commit()
     return {"message": "Removed from cart"}
 
-@router.post("/wishlist/{course_id}")
+@router.post("/wishlist/{course_id}", response_model=dict)
 def move_to_wishlist(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     cart_item = db.query(CartItemModel).filter(
         CartItemModel.user_id == current_user.id,
@@ -71,6 +82,18 @@ def move_to_wishlist(course_id: int, db: Session = Depends(get_db), current_user
     db.commit()
     return {"message": "Moved to wishlist"}
 
+@router.delete("/wishlist/remove/{course_id}", response_model=dict)
+def remove_from_wishlist(course_id: int, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    wish_item = db.query(WishlistItemModel).filter(
+        WishlistItemModel.user_id == current_user.id,
+        WishlistItemModel.course_id == course_id
+    ).first()
+    if not wish_item:
+        raise HTTPException(status_code=404, detail="Item not in wishlist")
+    db.delete(wish_item)
+    db.commit()
+    return {"message": "Removed from wishlist"}
+
 @router.get("/wishlist", response_model=List[WishlistItem])
 def get_wishlist(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     return db.query(WishlistItemModel).filter(WishlistItemModel.user_id == current_user.id).all()
@@ -79,7 +102,7 @@ def get_wishlist(db: Session = Depends(get_db), current_user: UserModel = Depend
 def get_purchases(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     return db.query(PurchaseModel).filter(PurchaseModel.user_id == current_user.id).order_by(PurchaseModel.purchased_at.desc()).all()
 
-@router.post("/checkout")
+@router.post("/checkout", response_model=dict)
 def checkout(coupon_code: Optional[str] = None, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     cart_items = db.query(CartItemModel).filter(CartItemModel.user_id == current_user.id).all()
     if not cart_items:
@@ -132,7 +155,7 @@ def checkout(coupon_code: Optional[str] = None, db: Session = Depends(get_db), c
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/webhook")
+@router.post("/webhook", response_model=dict)
 async def stripe_webhook(request: Request, stripe_signature: str = Header(None), db: Session = Depends(get_db)):
     payload = await request.body()
     try:

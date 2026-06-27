@@ -12,10 +12,10 @@ router = APIRouter(
     tags=["Courses"]
 )
 
-@router.get("/", response_model=List[CourseListItem])
+@router.get("/", response_model=dict)
 def get_courses(
     db: Session = Depends(get_db),
-    skip: int = 0,
+    page: int = 1,
     limit: int = 10,
     search: Optional[str] = None,
     category_id: Optional[int] = None,
@@ -33,11 +33,33 @@ def get_courses(
     if max_price is not None:
         query = query.filter(CourseModel.price <= max_price)
         
-    return query.offset(skip).limit(limit).all()
+    total_count = query.count()
+    total_pages = (total_count + limit - 1) // limit if limit > 0 else 1
+    skip = (page - 1) * limit
+    data = query.offset(skip).limit(limit).all()
+    
+    return {
+        "data": [CourseListItem.model_validate(c).model_dump() for c in data],
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "page": page,
+        "limit": limit
+    }
 
-@router.get("/categories", response_model=List[Category])
-def get_categories(db: Session = Depends(get_db)):
-    return db.query(CategoryModel).all()
+@router.get("/categories", response_model=dict)
+def get_categories(db: Session = Depends(get_db), page: int = 1, limit: int = 10):
+    query = db.query(CategoryModel)
+    total_count = query.count()
+    total_pages = (total_count + limit - 1) // limit if limit > 0 else 1
+    skip = (page - 1) * limit
+    data = query.offset(skip).limit(limit).all()
+    return {
+        "data": [Category.model_validate(c).model_dump() for c in data],
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "page": page,
+        "limit": limit
+    }
 
 @router.get("/{course_id}", response_model=Course)
 def get_course(course_id: int, db: Session = Depends(get_db)):

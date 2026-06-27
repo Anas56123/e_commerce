@@ -3,7 +3,7 @@ from conftest import auth_headers
 
 def create_course(client, instructor_token, title="Instructor Course"):
     return client.post(
-        "/api/v1/instructor/courses/step1",
+        "/api/v1/instructor/courses/section",
         json={"title": title, "description": "desc", "price": 49.99, "category_id": 1},
         headers=auth_headers(instructor_token),
     )
@@ -34,7 +34,7 @@ class TestInstructorCourseStep1:
 
     def test_create_course_unauthenticated(self, client):
         resp = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "X", "description": "desc", "price": 10.0, "category_id": 1},
         )
         assert resp.status_code == 401
@@ -45,16 +45,16 @@ class TestInstructorCourseStep1:
 
 
 class TestInstructorCourseStep2:
-    def test_update_step2_nonexistent_course(self, client, instructor_token):
+    def test_update_lecture_nonexistent_course(self, client, instructor_token):
         resp = client.put(
-            "/api/v1/instructor/courses/999999/step2?difficulty=beginner",
+            "/api/v1/instructor/courses/999999/lecture?difficulty=easy",
             headers=auth_headers(instructor_token),
         )
         assert resp.status_code == 404
 
-    def test_update_step2_unauthorized(self, client, student_token):
+    def test_update_lecture_unauthorized(self, client, student_token):
         resp = client.put(
-            "/api/v1/instructor/courses/1/step2?difficulty=beginner",
+            "/api/v1/instructor/courses/1/lecture?difficulty=easy",
             headers=auth_headers(student_token),
         )
         assert resp.status_code == 403
@@ -181,6 +181,8 @@ class TestInstructorPublish:
             json={"title": "Section 1", "order": 1, "course_id": course_id},
             headers=auth_headers(instructor_token),
         )
+        resp = client.put(
+            f"/api/v1/instructor/courses/{course_id}/publish?publish=true",
             headers=auth_headers(instructor_token),
         )
         assert resp.status_code == 200

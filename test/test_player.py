@@ -14,7 +14,7 @@ class TestPlayerStream:
 
     def test_stream_not_enrolled(self, client, student_token, instructor_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Player Course", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )
@@ -44,7 +44,7 @@ class TestPlayerStream:
 
     def test_stream_enrolled_student(self, client, student_token, instructor_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Stream Me", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )
@@ -87,7 +87,7 @@ class TestPlayerProgress:
 
     def test_update_progress_success(self, client, student_token, instructor_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Progress Player Course", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )
@@ -126,7 +126,7 @@ class TestPlayerNotes:
 
     def test_add_note_success(self, client, student_token, instructor_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Notes Course", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )
@@ -157,7 +157,7 @@ class TestPlayerAttachments:
 
     def test_get_attachments_empty(self, client, student_token, instructor_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Attachments Course", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )

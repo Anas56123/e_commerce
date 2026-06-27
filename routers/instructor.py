@@ -6,7 +6,7 @@ from database import get_db
 from modules.user import User
 from modules.course import Course, Section, Lecture, Category
 from modules.interaction import Purchase, Enrollment, CourseReview
-from schemas.course import CourseListItem, Course as CourseSchema, CourseCreate, SectionCreate, Section as SectionSchema, Lecture as LectureSchema
+from schemas.course import CourseListItem, Course as CourseSchema, CourseCreate, SectionCreate, Section as SectionSchema, Lecture as LectureSchema, CourseDifficulty
 import oauth2
 import shutil
 import os
@@ -88,8 +88,8 @@ def get_instructor_dashboard(db: Session = Depends(get_db), current_user: User =
     }
 
 
-@router.post("/courses/step1", response_model=CourseSchema)
-def course_creator_step1(course: CourseCreate, db: Session = Depends(get_db), current_user: User = Depends(oauth2.check_role(["instructor"]))):
+@router.post("/courses/section", response_model=CourseSchema)
+def course_creator_section(course: CourseCreate, db: Session = Depends(get_db), current_user: User = Depends(oauth2.check_role(["instructor"]))):
     category = db.query(Category).filter(Category.id == course.category_id).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
@@ -109,10 +109,10 @@ def course_creator_step1(course: CourseCreate, db: Session = Depends(get_db), cu
     return new_course
 
 
-@router.put("/courses/{course_id}/step2", response_model=CourseSchema)
-def course_creator_step2(
+@router.put("/courses/{course_id}/lecture", response_model=CourseSchema)
+def course_creator_lecture(
     course_id: int, 
-    difficulty: str, 
+    difficulty: CourseDifficulty, 
     requirements: Optional[str] = None, 
     learning_objectives: Optional[str] = None, 
     db: Session = Depends(get_db), 
@@ -126,6 +126,36 @@ def course_creator_step2(
     course.requirements = requirements
     course.learning_objectives = learning_objectives
     
+    db.commit()
+    db.refresh(course)
+    return course
+
+@router.put("/courses/{course_id}/step3", response_model=CourseSchema)
+def course_creator_step3(
+    course_id: int, 
+    price: float, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(oauth2.check_role(["instructor"]))
+):
+    course = db.query(Course).filter(Course.id == course_id, Course.instructor_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found or unauthorized")
+    course.price = price
+    db.commit()
+    db.refresh(course)
+    return course
+
+@router.put("/courses/{course_id}/step4", response_model=CourseSchema)
+def course_creator_step4(
+    course_id: int, 
+    is_published: bool = False, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(oauth2.check_role(["instructor"]))
+):
+    course = db.query(Course).filter(Course.id == course_id, Course.instructor_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found or unauthorized")
+    course.status = "published" if is_published else "draft"
     db.commit()
     db.refresh(course)
     return course

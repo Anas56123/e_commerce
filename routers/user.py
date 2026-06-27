@@ -191,44 +191,7 @@ def apple_auth(token: str, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-# @router.post("/auth/google")
-# def google_auth(token: str, db: Session = Depends(get_db)):
-#     email = f"google_user_{token[:5]}@gmail.com"
-#     user = db.query(User).filter(User.email == email).first()
-#     if not user:
-#         user = User(username=email.split('@')[0], email=email, provider="google", role="student")
-#         db.add(user)
-#         db.commit()
-#         db.refresh(user)
-    
-#     access_token = oauth2.create_access_token(data={"user_id": user.id})
-#     return {"access_token": access_token, "token_type": "bearer"}
 
-# @router.post("/auth/facebook")
-# def facebook_auth(token: str, db: Session = Depends(get_db)):
-#     email = f"fb_user_{token[:5]}@facebook.com"
-#     user = db.query(User).filter(User.email == email).first()
-#     if not user:
-#         user = User(username=email.split('@')[0], email=email, provider="facebook", role="student")
-#         db.add(user)
-#         db.commit()
-#         db.refresh(user)
-    
-#     access_token = oauth2.create_access_token(data={"user_id": user.id})
-#     return {"access_token": access_token, "token_type": "bearer"}
-
-# @router.post("/auth/apple")
-# def apple_auth(token: str, db: Session = Depends(get_db)):
-#     email = f"apple_user_{token[:5]}@apple.com"
-#     user = db.query(User).filter(User.email == email).first()
-#     if not user:
-#         user = User(username=email.split('@')[0], email=email, provider="apple", role="student")
-#         db.add(user)
-#         db.commit()
-#         db.refresh(user)
-    
-#     access_token = oauth2.create_access_token(data={"user_id": user.id})
-#     return {"access_token": access_token, "token_type": "bearer"}
 
 # --- User Management ---
 
@@ -301,7 +264,9 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login('anasbenmessaoud2000@gmail.com', 'beas edue qizi uiso')
+            smtp_email = os.getenv("SMTP_EMAIL", "default@example.com")
+            smtp_password = os.getenv("SMTP_PASSWORD", "")
+            smtp.login(smtp_email, smtp_password)
             smtp.send_message(msg)
         return {"message": "Password reset token generated and sent", "reset_token": reset_token}
     except Exception as e:

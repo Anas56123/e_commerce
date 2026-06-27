@@ -28,7 +28,7 @@ class TestReviews:
 
     def test_add_review_not_enrolled(self, client, instructor_token, student_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Review Course", "description": "desc", "price": 10.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )
@@ -46,7 +46,7 @@ class TestReviews:
 
     def test_add_review_invalid_rating(self, client, instructor_token, student_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Rating Course", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )
@@ -66,7 +66,7 @@ class TestReviews:
 
     def test_add_review_success_and_duplicate(self, client, instructor_token, student_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Success Review Course", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )

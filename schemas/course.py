@@ -1,5 +1,11 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from enum import Enum
+
+class CourseDifficulty(str, Enum):
+    easy = "easy"
+    medium = "medium"
+    hard = "hard"
 
 class CategoryBase(BaseModel):
     name: str
@@ -67,7 +73,7 @@ class CourseBase(BaseModel):
     thumbnail: Optional[str] = None
     category_id: int
     status: Optional[str] = "draft"
-    difficulty: Optional[str] = None
+    difficulty: Optional[CourseDifficulty] = None
     requirements: Optional[str] = None
     learning_objectives: Optional[str] = None
 
@@ -90,6 +96,6 @@ class CourseListItem(BaseModel):
     thumbnail: Optional[str] = None
     category: Category
     status: str
-    difficulty: Optional[str] = None
+    difficulty: Optional[CourseDifficulty] = None
     class Config:
         from_attributes = True

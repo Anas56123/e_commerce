@@ -48,7 +48,7 @@ class TestGetCourseById:
 
     def test_get_existing_course(self, client, instructor_token):
         create_resp = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Fetch Me", "description": "desc", "price": 10.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )

@@ -32,8 +32,8 @@ app.include_router(earnings_router_mod.router)
 app.include_router(chat_router_mod.router)
 app.include_router(public_router_mod.router)
 
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
-
 @app.get("/api/v1/")
 def root():
     return {"message": "Welcome to the E-commerce Course Platform API"}
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")

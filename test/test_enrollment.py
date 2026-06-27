@@ -23,7 +23,7 @@ class TestEnrollments:
 
     def test_enroll_idempotent(self, client, student_token, instructor_token):
         create_resp = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Enroll Test Course", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )
@@ -50,7 +50,7 @@ class TestLectureProgress:
 
     def test_mark_progress_not_enrolled(self, client, student_token, instructor_token):
         c = client.post(
-            "/api/v1/instructor/courses/step1",
+            "/api/v1/instructor/courses/section",
             json={"title": "Progress Course", "description": "desc", "price": 0.0, "category_id": 1},
             headers=auth_headers(instructor_token),
         )
